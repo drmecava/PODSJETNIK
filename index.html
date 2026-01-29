@@ -1,0 +1,1486 @@
+<!doctype html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Podsjetnik – Godišnji kalendar</title>
+  <style>
+    :root{
+      --bg:#0b0f1a;
+      --panel:#121a2b;
+      --panel2:#0f1727;
+      --ink:#e9eefc;
+      --muted:#b7c2de;
+      --line:rgba(255,255,255,.10);
+      --accent:#c7a35a;
+      --danger:#ff5c62;
+      --ok:#4bd37b;
+      --warning:#f5b942;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius:14px;
+      --radius2:10px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono";
+      --sans: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 20% 0%, rgba(199,163,90,.10), transparent 60%),
+                  radial-gradient(900px 600px at 100% 20%, rgba(120,160,255,.10), transparent 55%),
+                  var(--bg);
+      color:var(--ink);
+    }
+    .app{
+      max-width:1300px;
+      margin:0 auto;
+      padding:18px;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      .app{grid-template-columns:1fr}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(18,26,43,.92), rgba(12,18,31,.92));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .title h1{
+      margin:0;
+      font-size:15px;
+      letter-spacing:.2px;
+    }
+    .title p{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.25;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color:var(--ink);
+      padding:9px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      transition: transform .06s ease, background .2s ease, border-color .2s ease;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(199,163,90,.45);
+      background: rgba(199,163,90,.14);
+    }
+    .btn.primary:hover{ background: rgba(199,163,90,.20); }
+
+    /* LEFT PANEL */
+    .left .body{ padding:12px 14px 14px; }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .row > *{ flex:1; }
+    .in{
+      width:100%;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color:var(--ink);
+      padding:10px 10px;
+      border-radius:10px;
+      outline:none;
+    }
+    .in:focus{ border-color: rgba(199,163,90,.55); box-shadow:0 0 0 3px rgba(199,163,90,.10); }
+    .tiny{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(255,255,255,.04);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .pill b{ color:var(--ink); font-weight:700; }
+    .switch{
+      display:flex; align-items:center; gap:10px;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background: rgba(255,255,255,.03);
+    }
+    .switch label{ font-size:12px; color:var(--muted); }
+    .switch input{ transform: scale(1.1); }
+
+    .list{
+      margin-top:12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      background: rgba(255,255,255,.03);
+    }
+    .list .lh{
+      padding:10px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--line);
+    }
+    .list .lh span{ font-size:12px; color:var(--muted); }
+    .items{ max-height: 420px; overflow:auto; }
+    .item{
+      padding:10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      cursor:default;
+    }
+    .item:last-child{ border-bottom:0; }
+    .dot{
+      width:10px; height:10px; border-radius:99px;
+      background: rgba(199,163,90,.9);
+      margin-top:5px;
+      flex:0 0 auto;
+    }
+    .dot.completed{ background: rgba(75,211,123,.9); }
+    .dot.postponed{ background: rgba(245,185,66,.9); }
+    .dot.missed{ background: rgba(255,92,98,.9); }
+    .itxt{ flex:1; min-width:0; }
+    .itxt .t{ font-weight:700; font-size:13px; margin:0 0 4px; }
+    .itxt .m{ font-size:12px; color:var(--muted); margin:0 0 6px; }
+    .itxt .d{ font-size:12px; color:rgba(233,238,252,.92); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .actions{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+    .mini{
+      padding:7px 9px;
+      border-radius:10px;
+      font-size:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      cursor:pointer;
+      color:var(--ink);
+      font-weight:700;
+    }
+    .mini:hover{ background: rgba(255,255,255,.08); }
+    .mini.danger{ border-color: rgba(255,92,98,.30); background: rgba(255,92,98,.10); }
+    .mini.danger:hover{ background: rgba(255,92,98,.16); }
+    .mini.ok{ border-color: rgba(75,211,123,.30); background: rgba(75,211,123,.10); }
+    .mini.ok:hover{ background: rgba(75,211,123,.16); }
+    .mini.warning{ border-color: rgba(245,185,66,.30); background: rgba(245,185,66,.10); }
+    .mini.warning:hover{ background: rgba(245,185,66,.16); }
+
+    /* RIGHT PANEL */
+    .right .body{ padding:12px 14px 14px; }
+    
+    .yearSelector{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background: rgba(255,255,255,.03);
+      margin-bottom:14px;
+    }
+    .yearBtn{
+      padding:8px 12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color:var(--ink);
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      transition: all .2s ease;
+    }
+    .yearBtn:hover{ background: rgba(255,255,255,.08); }
+    .yearDisplay{
+      font-size:16px;
+      font-weight:900;
+      min-width:80px;
+      text-align:center;
+    }
+
+    .yeargrid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:10px;
+      padding:12px 14px 14px;
+      border-top:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+    }
+    @media (max-width: 980px){
+      .yeargrid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    }
+    @media (max-width: 560px){
+      .yeargrid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    .mchip{
+      padding:10px 10px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius:12px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      transition: background .2s ease, border-color .2s ease, transform .06s ease;
+      user-select:none;
+    }
+    .mchip:hover{ background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); }
+    .mchip:active{ transform: translateY(1px); }
+    .mchip.active{
+      border-color: rgba(199,163,90,.55);
+      background: rgba(199,163,90,.12);
+    }
+    .mchip .name{ font-weight:800; font-size:13px; }
+    .mchip .count{ font-size:12px; color:var(--muted); }
+
+    .double{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+    @media (max-width: 980px){
+      .double{ grid-template-columns:1fr; }
+    }
+    .month{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
+      position:relative;
+    }
+    .month.central{
+      border-color: rgba(199,163,90,.55);
+      box-shadow: 0 0 0 3px rgba(199,163,90,.10);
+      background: rgba(199,163,90,.07);
+    }
+    .mh{
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      gap:10px;
+    }
+    .mh .left{
+      display:flex; flex-direction:column; gap:3px;
+      min-width:0;
+    }
+    .mh .left .a{
+      font-weight:900;
+      font-size:13px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .mh .left .b{
+      font-size:12px; color:var(--muted);
+    }
+    .mh .right{ display:flex; gap:6px; }
+    .kbd{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      padding:6px 8px;
+      border-radius:10px;
+      white-space:nowrap;
+    }
+    .grid{
+      padding:10px;
+      display:grid;
+      grid-template-columns: repeat(7, minmax(0,1fr));
+      gap:6px;
+    }
+    .dow{
+      font-size:11px;
+      color:var(--muted);
+      text-align:center;
+      padding:6px 0;
+    }
+    .day{
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      border-radius:10px;
+      padding:8px 8px 6px;
+      min-height:64px;
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      position:relative;
+      transition: background .15s ease, border-color .15s ease, transform .06s ease;
+    }
+    .day:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
+    .day:active{ transform: translateY(1px); }
+    .day.disabled{
+      cursor:not-allowed;
+      opacity:.45;
+    }
+    .day.disabled:hover{ background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.08); transform:none; }
+    .num{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      font-size:12px;
+      color:rgba(233,238,252,.92);
+      font-weight:800;
+    }
+    .badge{
+      font-size:11px;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      padding:2px 6px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .bHot{ border-color: rgba(255,92,98,.30); background: rgba(255,92,98,.10); color:#ffd7d9; }
+    .bOk{ border-color: rgba(75,211,123,.28); background: rgba(75,211,123,.10); color:#d7ffe5; }
+    .bWarning{ border-color: rgba(245,185,66,.28); background: rgba(245,185,66,.10); color:#fff4d9; }
+    .miniTasks{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      overflow:hidden;
+    }
+    .tline{
+      font-size:11px;
+      color:rgba(233,238,252,.90);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      border-left:3px solid rgba(199,163,90,.9);
+      padding-left:6px;
+    }
+    .tline.completed{ border-left-color: rgba(75,211,123,.9); }
+    .tline.postponed{ border-left-color: rgba(245,185,66,.9); }
+    .tline.missed{ border-left-color: rgba(255,92,98,.9); }
+    .todayRing{
+      outline:2px solid rgba(120,160,255,.40);
+      box-shadow: 0 0 0 3px rgba(120,160,255,.10);
+    }
+
+    /* DAY VIEW - TIMELINE */
+    .dayView{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
+    }
+    .dayView.active{
+      border-color: rgba(120,160,255,.55);
+      box-shadow: 0 0 0 3px rgba(120,160,255,.10);
+      background: rgba(120,160,255,.07);
+    }
+    .timeline{
+      padding:10px;
+      display:grid;
+      gap:4px;
+    }
+    .timeSlot{
+      display:grid;
+      grid-template-columns: 60px 1fr;
+      gap:8px;
+      align-items:center;
+      padding:8px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      border-radius:10px;
+      cursor:pointer;
+      transition: all .15s ease;
+      min-height:48px;
+    }
+    .timeSlot:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14); }
+    .timeSlot.occupied{
+      background: rgba(199,163,90,.08);
+      border-color: rgba(199,163,90,.35);
+    }
+    .timeSlot.occupied.completed{
+      background: rgba(75,211,123,.08);
+      border-color: rgba(75,211,123,.35);
+    }
+    .timeSlot.occupied.postponed{
+      background: rgba(245,185,66,.08);
+      border-color: rgba(245,185,66,.35);
+    }
+    .timeSlot.occupied.missed{
+      background: rgba(255,92,98,.08);
+      border-color: rgba(255,92,98,.35);
+    }
+    .timeLabel{
+      font-family:var(--mono);
+      font-size:12px;
+      font-weight:700;
+      color:var(--muted);
+    }
+    .timeContent{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .taskInfo{
+      flex:1;
+      min-width:0;
+    }
+    .taskInfo .tn{
+      font-size:13px;
+      font-weight:700;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .taskInfo .td{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    /* MODAL */
+    .modal{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:9999;
+    }
+    .modal.open{ display:flex; }
+    .panel{
+      width:min(820px, 100%);
+      background: linear-gradient(180deg, rgba(18,26,43,.96), rgba(12,18,31,.96));
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel .ph{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .panel .ph .l{
+      display:flex; flex-direction:column; gap:3px; min-width:0;
+    }
+    .panel .ph .l .x{ font-weight:900; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .panel .ph .l .y{ font-size:12px; color:var(--muted); }
+    .panel .pb{ padding:12px 14px 14px; }
+    .cols{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media(max-width: 760px){ .cols{ grid-template-columns:1fr; } }
+    textarea.in{ min-height:120px; resize:vertical; }
+    .help{
+      font-size:12px; color:var(--muted); line-height:1.35;
+      border:1px dashed rgba(255,255,255,.14);
+      background: rgba(255,255,255,.03);
+      padding:10px 10px;
+      border-radius:12px;
+    }
+    .pb .footer{
+      display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    /* STATUS MODAL */
+    .statusBtns{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:12px;
+    }
+    .statusBtn{
+      padding:14px 10px;
+      border:2px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius:12px;
+      cursor:pointer;
+      text-align:center;
+      transition: all .2s ease;
+    }
+    .statusBtn:hover{ background: rgba(255,255,255,.07); }
+    .statusBtn.completed{
+      border-color: rgba(75,211,123,.45);
+      background: rgba(75,211,123,.10);
+    }
+    .statusBtn.completed:hover{ background: rgba(75,211,123,.15); }
+    .statusBtn.postponed{
+      border-color: rgba(245,185,66,.45);
+      background: rgba(245,185,66,.10);
+    }
+    .statusBtn.postponed:hover{ background: rgba(245,185,66,.15); }
+    .statusBtn.missed{
+      border-color: rgba(255,92,98,.45);
+      background: rgba(255,92,98,.10);
+    }
+    .statusBtn.missed:hover{ background: rgba(255,92,98,.15); }
+    .statusBtn .ico{
+      font-size:24px;
+      margin-bottom:6px;
+    }
+    .statusBtn .txt{
+      font-size:13px;
+      font-weight:700;
+    }
+
+    /* ALARM POPUP */
+    .alarm{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      width:min(420px, calc(100% - 32px));
+      background: rgba(18,26,43,.97);
+      border:1px solid rgba(199,163,90,.55);
+      box-shadow: var(--shadow);
+      border-radius:16px;
+      padding:12px 12px;
+      display:none;
+      z-index:10000;
+    }
+    .alarm.show{ display:block; }
+    .alarm .a1{ font-weight:900; margin:0 0 6px; }
+    .alarm .a2{ font-size:12px; color:var(--muted); margin:0 0 10px; }
+    .alarm .a3{
+      font-size:12px; margin:0 0 10px; white-space:pre-wrap;
+      border-left:3px solid rgba(199,163,90,.9);
+      padding-left:10px;
+    }
+    .alarm .abtn{ display:flex; gap:8px; justify-content:flex-end; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- LEFT -->
+    <section class="card left">
+      <div class="hd">
+        <div class="title">
+          <h1>Obaveze & Alarm sistem</h1>
+          <p>Pregled svih obaveza + pretraga. Alarm: dan prije, 2 sata prije, u trenutku.</p>
+        </div>
+        <button class="btn primary" id="btnNotify">Uključi notifikacije</button>
+      </div>
+
+      <div class="body">
+        <div class="row">
+          <input class="in" id="search" placeholder="Pretraga (naziv ili opis)..." />
+          <button class="btn" id="btnExport">Export</button>
+          <button class="btn" id="btnImport">Import</button>
+        </div>
+
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <span class="pill"><b id="pillYear">----</b> godina</span>
+          <span class="pill"><b id="pillFocus">----</b> fokus</span>
+          <span class="pill"><b id="pillTotal">0</b> obaveza</span>
+        </div>
+
+        <div style="margin-top:10px" class="switch">
+          <input type="checkbox" id="soundOn" checked />
+          <label for="soundOn">Zvučni alarm (beep)</label>
+          <span style="margin-left:auto" class="tiny">Provjera alarma: svakih 20s</span>
+        </div>
+
+        <div class="help" style="margin-top:10px">
+          <b>Status obaveza:</b><br>
+          • <span style="color:#4bd37b">●</span> Zelena - Urađeno<br>
+          • <span style="color:#f5b942">●</span> Žuta - Prolongirano<br>
+          • <span style="color:#ff5c62">●</span> Crvena - Nije urađeno (promašteno)<br>
+          • <span style="color:#c7a35a">●</span> Zlatna - Na čekanju
+        </div>
+
+        <div class="list">
+          <div class="lh">
+            <span>Lista obaveza</span>
+            <span class="tiny">Klik na "Edit" / "Status" / "Obriši"</span>
+          </div>
+          <div class="items" id="taskList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <section class="card right">
+      <div class="hd">
+        <div class="title">
+          <h1>Godišnji kalendar (12 mjeseci)</h1>
+          <p>Klikni mjesec da postane centralni. Klikni datum za detaljan prikaz sati.</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" id="btnToday">Danas</button>
+          <button class="btn" id="btnClear">Obriši sve</button>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="yearSelector">
+          <button class="yearBtn" id="btnPrevYear">◄ Prošla</button>
+          <div class="yearDisplay" id="yearDisplay">2025</div>
+          <button class="yearBtn" id="btnNextYear">Sljedeća ►</button>
+        </div>
+
+        <div class="double" id="doubleMonths"></div>
+      </div>
+
+      <div class="yeargrid" id="yearGrid"></div>
+    </section>
+  </div>
+
+  <!-- MODAL add/edit -->
+  <div class="modal" id="modal">
+    <div class="panel">
+      <div class="ph">
+        <div class="l">
+          <div class="x" id="mTitle">Nova obaveza</div>
+          <div class="y" id="mSub">Odaberi datum</div>
+        </div>
+        <button class="btn" id="mClose">Zatvori</button>
+      </div>
+      <div class="pb">
+        <div class="cols">
+          <div>
+            <label class="tiny">Kratak naziv</label>
+            <input class="in" id="fTitle" placeholder="npr. Pozvati servis / Platiti račun..." />
+
+            <div style="height:10px"></div>
+
+            <label class="tiny">Vrijeme (automatski popunjeno ako kliknuto na sat)</label>
+            <input class="in" id="fTime" placeholder="14:30" readonly />
+
+            <div style="height:10px"></div>
+
+            <label class="tiny">Detaljan opis (vidi se u listi i hover-u)</label>
+            <textarea class="in" id="fDesc" placeholder="Koraci, napomene, uputstvo..."></textarea>
+          </div>
+
+          <div>
+            <div class="help">
+              <b>Alarm sistem:</b><br>
+              • <b>1 dan prije</b> u 18:00<br>
+              • <b>2 sata prije</b> zadatog vremena<br>
+              • <b>U trenutku</b> zadatog vremena<br><br>
+              Alarm radi samo dok je stranica otvorena. Preporučujem instalirati kao PWA app.
+            </div>
+
+            <div style="height:10px"></div>
+
+            <label class="tiny">Kategorija (opciono)</label>
+            <input class="in" id="fCategory" placeholder="Posao / Lično / Zdravlje..." />
+
+            <div style="height:10px"></div>
+
+            <label class="tiny">Prioritet</label>
+            <select class="in" id="fPriority">
+              <option value="low">Nizak</option>
+              <option value="medium" selected>Srednji</option>
+              <option value="high">Visok</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="footer">
+          <button class="btn" id="btnCancel">Otkaži</button>
+          <button class="btn primary" id="btnSave">Sačuvaj</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL status -->
+  <div class="modal" id="statusModal">
+    <div class="panel">
+      <div class="ph">
+        <div class="l">
+          <div class="x" id="sTitle">Promijeni status</div>
+          <div class="y" id="sSub">Odaberi status obaveze</div>
+        </div>
+        <button class="btn" id="sClose">Zatvori</button>
+      </div>
+      <div class="pb">
+        <div class="statusBtns">
+          <div class="statusBtn completed" onclick="updateTaskStatus('completed')">
+            <div class="ico">✓</div>
+            <div class="txt">Urađeno</div>
+          </div>
+          <div class="statusBtn postponed" onclick="updateTaskStatus('postponed')">
+            <div class="ico">→</div>
+            <div class="txt">Prolongirano</div>
+          </div>
+          <div class="statusBtn missed" onclick="updateTaskStatus('missed')">
+            <div class="ico">✕</div>
+            <div class="txt">Nije urađeno</div>
+          </div>
+        </div>
+
+        <div id="postponeSection" style="display:none; margin-top:14px;">
+          <label class="tiny">Novi datum (za prolongiranje)</label>
+          <input class="in" type="date" id="postponeDate" />
+        </div>
+
+        <div class="footer">
+          <button class="btn" id="sCancelBtn">Otkaži</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALARM POPUP -->
+  <div class="alarm" id="alarmPopup">
+    <h3 class="a1">🔔 PODSJETNIK!</h3>
+    <p class="a2" id="alarmTime">Za 1 dan</p>
+    <p class="a3" id="alarmText">Obaveza dolazi!</p>
+    <div class="abtn">
+      <button class="btn" id="alarmDismiss">Zatvori</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== GLOBALNE VARIJABLE =====
+    const MONTHS_SR = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
+    const DAYS_SR = ['Pon', 'Uto', 'Sri', 'Čet', 'Pet', 'Sub', 'Ned'];
+    
+    let tasks = JSON.parse(localStorage.getItem('calendarTasks') || '[]');
+    let currentYear = new Date().getFullYear();
+    let focusMonth = new Date().getMonth(); // 0-11
+    let selectedDate = null; // Za prikaz timeline-a
+    let editingTaskId = null;
+    let statusTaskId = null;
+    let notificationsEnabled = false;
+    let alarmShown = new Set();
+
+    // ===== UTILITY FUNKCIJE =====
+    function saveTasks() {
+      localStorage.setItem('calendarTasks', JSON.stringify(tasks));
+    }
+
+    function getDateKey(year, month, day) {
+      return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    function getDaysInMonth(year, month) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function getFirstDayOfMonth(year, month) {
+      let day = new Date(year, month, 1).getDay();
+      return day === 0 ? 6 : day - 1;
+    }
+
+    function isToday(year, month, day) {
+      const today = new Date();
+      return today.getFullYear() === year && 
+             today.getMonth() === month && 
+             today.getDate() === day;
+    }
+
+    function isPast(year, month, day, time = null) {
+      const date = new Date(year, month, day);
+      if (time) {
+        const [h, m] = time.split(':');
+        date.setHours(parseInt(h), parseInt(m), 0);
+      } else {
+        date.setHours(23, 59, 59);
+      }
+      return date < new Date();
+    }
+
+    function canEdit(year, month) {
+      if (year < currentYear) return false;
+      if (year > currentYear) return true;
+      return month >= focusMonth;
+    }
+
+    function getTaskStatus(task) {
+      if (task.status) return task.status;
+      
+      const [y, m, d] = task.date.split('-');
+      if (isPast(parseInt(y), parseInt(m) - 1, parseInt(d), task.time)) {
+        return 'pending'; // Prošlo je vrijeme ali status nije postavljen
+      }
+      return 'pending';
+    }
+
+    // ===== RENDER FUNKCIJE =====
+    function renderYearGrid() {
+      const grid = document.getElementById('yearGrid');
+      grid.innerHTML = '';
+
+      for (let m = 0; m < 12; m++) {
+        const count = tasks.filter(t => {
+          const [y, mo] = t.date.split('-');
+          return parseInt(y) === currentYear && parseInt(mo) === m + 1;
+        }).length;
+
+        const chip = document.createElement('div');
+        chip.className = 'mchip' + (m === focusMonth ? ' active' : '');
+        chip.innerHTML = `
+          <span class="name">${MONTHS_SR[m]}</span>
+          <span class="count">${count}</span>
+        `;
+        chip.onclick = () => {
+          focusMonth = m;
+          selectedDate = null; // Reset day view
+          renderAll();
+        };
+        grid.appendChild(chip);
+      }
+    }
+
+    function renderDoubleMonths() {
+      const container = document.getElementById('doubleMonths');
+      container.innerHTML = '';
+
+      if (selectedDate) {
+        // Prikaži timeline za odabrani dan
+        const div = document.createElement('div');
+        div.className = 'dayView active';
+        div.innerHTML = renderDayTimeline(selectedDate.year, selectedDate.month, selectedDate.day);
+        container.appendChild(div);
+
+        // Prikaži centralni mjesec pored
+        const monthDiv = document.createElement('div');
+        monthDiv.className = 'month central';
+        monthDiv.innerHTML = renderMonth(currentYear, focusMonth, true);
+        container.appendChild(monthDiv);
+      } else {
+        // Prikaži centralni i sljedeći mjesec
+        const months = [
+          focusMonth,
+          focusMonth === 11 ? 0 : focusMonth + 1
+        ];
+
+        const years = [
+          currentYear,
+          focusMonth === 11 ? currentYear + 1 : currentYear
+        ];
+
+        months.forEach((m, idx) => {
+          const y = years[idx];
+          const div = document.createElement('div');
+          div.className = 'month' + (idx === 0 ? ' central' : '');
+          div.innerHTML = renderMonth(y, m, idx === 0);
+          container.appendChild(div);
+        });
+      }
+    }
+
+    function renderDayTimeline(year, month, day) {
+      const dateKey = getDateKey(year, month, day);
+      const dayTasks = tasks.filter(t => t.date === dateKey);
+      
+      let html = `
+        <div class="mh">
+          <div class="left">
+            <div class="a">${day}. ${MONTHS_SR[month]} ${year}</div>
+            <div class="b">Timeline pregled (6:00 - 18:00)</div>
+          </div>
+          <div class="right">
+            <button class="btn" onclick="closeDayView()">Zatvori</button>
+          </div>
+        </div>
+        <div class="timeline">
+      `;
+
+      // Generiši vremenske slotove od 6:00 do 18:00, svakih pola sata
+      for (let h = 6; h < 18; h++) {
+        for (let m = 0; m < 60; m += 30) {
+          const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+          const task = dayTasks.find(t => t.time === timeStr);
+          
+          let slotClass = 'timeSlot';
+          let content = '<span style="color:var(--muted); font-size:11px;">Dostupno</span>';
+          
+          if (task) {
+            const status = getTaskStatus(task);
+            slotClass += ' occupied';
+            
+            if (status === 'completed') slotClass += ' completed';
+            else if (status === 'postponed') slotClass += ' postponed';
+            else if (status === 'missed') slotClass += ' missed';
+            
+            content = `
+              <div class="taskInfo">
+                <div class="tn">${task.title}</div>
+                ${task.category ? `<div class="td">${task.category}</div>` : ''}
+              </div>
+              <div class="actions">
+                <button class="mini ok" onclick="editTask('${task.id}')">Edit</button>
+              </div>
+            `;
+          }
+          
+          html += `
+            <div class="${slotClass}" onclick="${!task ? `openModalWithTime(${year}, ${month}, ${day}, '${timeStr}')` : ''}">
+              <div class="timeLabel">${timeStr}</div>
+              <div class="timeContent">${content}</div>
+            </div>
+          `;
+        }
+      }
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderMonth(year, month, isCentral) {
+      const daysInMonth = getDaysInMonth(year, month);
+      const firstDay = getFirstDayOfMonth(year, month);
+      const editable = canEdit(year, month);
+
+      let html = `
+        <div class="mh">
+          <div class="left">
+            <div class="a">${MONTHS_SR[month]} ${year}</div>
+            <div class="b">${isCentral ? 'Fokus mjesec' : 'Sljedeći mjesec'}</div>
+          </div>
+          <div class="right">
+            ${isCentral ? '<span class="kbd">Centralni</span>' : ''}
+          </div>
+        </div>
+        <div class="grid">
+      `;
+
+      DAYS_SR.forEach(day => {
+        html += `<div class="dow">${day}</div>`;
+      });
+
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div></div>';
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = getDateKey(year, month, day);
+        const dayTasks = tasks.filter(t => t.date === dateKey);
+        const isTodayDay = isToday(year, month, day);
+        const isPastDay = isPast(year, month, day);
+
+        let classes = 'day';
+        if (isTodayDay) classes += ' todayRing';
+
+        // Prebroj statuse
+        const completedCount = dayTasks.filter(t => t.status === 'completed').length;
+        const postponedCount = dayTasks.filter(t => t.status === 'postponed').length;
+        const missedCount = dayTasks.filter(t => t.status === 'missed').length;
+        const pendingCount = dayTasks.filter(t => !t.status || t.status === 'pending').length;
+
+        let badge = '';
+        if (missedCount > 0) {
+          badge = `<span class="badge bHot">${dayTasks.length}</span>`;
+        } else if (postponedCount > 0) {
+          badge = `<span class="badge bWarning">${dayTasks.length}</span>`;
+        } else if (completedCount > 0 || pendingCount > 0) {
+          badge = `<span class="badge bOk">${dayTasks.length}</span>`;
+        }
+
+        let taskLines = '';
+        dayTasks.slice(0, 3).forEach(task => {
+          const status = getTaskStatus(task);
+          let lineClass = 'tline';
+          if (status === 'completed') lineClass += ' completed';
+          else if (status === 'postponed') lineClass += ' postponed';
+          else if (status === 'missed') lineClass += ' missed';
+          
+          taskLines += `<div class="${lineClass}" title="${task.title}">${task.time || ''} ${task.title}</div>`;
+        });
+
+        html += `
+          <div class="${classes}" data-year="${year}" data-month="${month}" data-day="${day}">
+            <div class="num">
+              <span>${day}</span>
+              ${badge}
+            </div>
+            <div class="miniTasks">${taskLines}</div>
+          </div>
+        `;
+      }
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderTaskList(filter = '') {
+      const container = document.getElementById('taskList');
+      
+      let filtered = tasks.filter(t => {
+        if (!filter) return true;
+        const search = filter.toLowerCase();
+        return t.title.toLowerCase().includes(search) || 
+               (t.description && t.description.toLowerCase().includes(search));
+      });
+
+      filtered.sort((a, b) => {
+        const dateCompare = a.date.localeCompare(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return (a.time || '').localeCompare(b.time || '');
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="item"><div class="itxt"><p class="m">Nema obaveza' + (filter ? ' koje odgovaraju pretrazi' : '') + '</p></div></div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(task => {
+        const [y, m, d] = task.date.split('-');
+        const dateStr = `${d}.${m}.${y}`;
+        const status = getTaskStatus(task);
+        
+        let dotClass = 'dot';
+        if (status === 'completed') dotClass += ' completed';
+        else if (status === 'postponed') dotClass += ' postponed';
+        else if (status === 'missed') dotClass += ' missed';
+
+        let statusText = '';
+        if (status === 'completed') statusText = '✓ Urađeno';
+        else if (status === 'postponed') statusText = '→ Prolongirano';
+        else if (status === 'missed') statusText = '✕ Propušteno';
+
+        return `
+          <div class="item">
+            <div class="${dotClass}"></div>
+            <div class="itxt">
+              <p class="t">${task.title} ${statusText ? `<span style="color:var(--muted); font-weight:normal; font-size:11px;">(${statusText})</span>` : ''}</p>
+              <p class="m">${dateStr} ${task.time ? 'u ' + task.time : ''} ${task.category ? '• ' + task.category : ''}</p>
+              ${task.description ? `<p class="d">${task.description}</p>` : ''}
+            </div>
+            <div class="actions">
+              <button class="mini ok" onclick="editTask('${task.id}')">Edit</button>
+              <button class="mini warning" onclick="openStatusModal('${task.id}')">Status</button>
+              <button class="mini danger" onclick="deleteTask('${task.id}')">Obriši</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateStats() {
+      document.getElementById('pillYear').textContent = currentYear;
+      document.getElementById('pillFocus').textContent = MONTHS_SR[focusMonth];
+      document.getElementById('pillTotal').textContent = tasks.length;
+      document.getElementById('yearDisplay').textContent = currentYear;
+    }
+
+    function renderAll() {
+      renderYearGrid();
+      renderDoubleMonths();
+      renderTaskList();
+      updateStats();
+      attachDayClickHandlers();
+    }
+
+    // ===== EVENT HANDLERI =====
+    function attachDayClickHandlers() {
+      document.querySelectorAll('.day').forEach(el => {
+        el.onclick = function() {
+          const year = parseInt(this.dataset.year);
+          const month = parseInt(this.dataset.month);
+          const day = parseInt(this.dataset.day);
+          
+          selectedDate = { year, month, day };
+          renderAll();
+        };
+      });
+    }
+
+    window.closeDayView = function() {
+      selectedDate = null;
+      renderAll();
+    };
+
+    window.openModalWithTime = function(year, month, day, time) {
+      openModal(year, month, day, null, time);
+    };
+
+    function openModal(year, month, day, taskId = null, presetTime = null) {
+      editingTaskId = taskId;
+      const modal = document.getElementById('modal');
+      
+      if (taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+          document.getElementById('fTitle').value = task.title;
+          document.getElementById('fTime').value = task.time || '';
+          document.getElementById('fDesc').value = task.description || '';
+          document.getElementById('fCategory').value = task.category || '';
+          document.getElementById('fPriority').value = task.priority || 'medium';
+          
+          document.getElementById('mTitle').textContent = 'Uredi obavezu';
+          document.getElementById('mSub').textContent = task.date;
+        }
+      } else {
+        document.getElementById('fTitle').value = '';
+        document.getElementById('fTime').value = presetTime || '';
+        document.getElementById('fDesc').value = '';
+        document.getElementById('fCategory').value = '';
+        document.getElementById('fPriority').value = 'medium';
+        
+        document.getElementById('mTitle').textContent = 'Nova obaveza';
+        document.getElementById('mSub').textContent = `${day}. ${MONTHS_SR[month]} ${year}`;
+      }
+      
+      modal.classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+      editingTaskId = null;
+    }
+
+    function saveTask() {
+      const title = document.getElementById('fTitle').value.trim();
+      if (!title) {
+        alert('Unesi naziv obaveze!');
+        return;
+      }
+
+      const time = document.getElementById('fTime').value.trim();
+      const description = document.getElementById('fDesc').value.trim();
+      const category = document.getElementById('fCategory').value.trim();
+      const priority = document.getElementById('fPriority').value;
+
+      if (editingTaskId) {
+        const task = tasks.find(t => t.id === editingTaskId);
+        if (task) {
+          task.title = title;
+          task.time = time;
+          task.description = description;
+          task.category = category;
+          task.priority = priority;
+        }
+      } else {
+        const dateText = document.getElementById('mSub').textContent;
+        const match = dateText.match(/(\d+)\.\s+(\w+)\s+(\d+)/);
+        
+        if (match) {
+          const day = parseInt(match[1]);
+          const monthName = match[2];
+          const year = parseInt(match[3]);
+          const month = MONTHS_SR.indexOf(monthName);
+          
+          const newTask = {
+            id: Date.now().toString(),
+            date: getDateKey(year, month, day),
+            title,
+            time,
+            description,
+            category,
+            priority,
+            status: 'pending',
+            alarmsShown: []
+          };
+          
+          tasks.push(newTask);
+        }
+      }
+
+      saveTasks();
+      closeModal();
+      renderAll();
+    }
+
+    window.editTask = function(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const [y, m, d] = task.date.split('-');
+      openModal(parseInt(y), parseInt(m) - 1, parseInt(d), taskId);
+    };
+
+    window.deleteTask = function(taskId) {
+      if (!confirm('Sigurno želiš obrisati ovu obavezu?')) return;
+      
+      tasks = tasks.filter(t => t.id !== taskId);
+      saveTasks();
+      renderAll();
+    };
+
+    // ===== STATUS FUNKCIJE =====
+    window.openStatusModal = function(taskId) {
+      statusTaskId = taskId;
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      document.getElementById('sTitle').textContent = 'Promijeni status: ' + task.title;
+      document.getElementById('sSub').textContent = task.date + (task.time ? ' u ' + task.time : '');
+      document.getElementById('postponeSection').style.display = 'none';
+      document.getElementById('statusModal').classList.add('open');
+    };
+
+    window.updateTaskStatus = function(status) {
+      if (status === 'postponed') {
+        document.getElementById('postponeSection').style.display = 'block';
+        return;
+      }
+
+      const task = tasks.find(t => t.id === statusTaskId);
+      if (!task) return;
+
+      task.status = status;
+      saveTasks();
+      
+      document.getElementById('statusModal').classList.remove('open');
+      statusTaskId = null;
+      renderAll();
+    };
+
+    document.getElementById('postponeDate').addEventListener('change', function() {
+      if (!this.value) return;
+
+      const task = tasks.find(t => t.id === statusTaskId);
+      if (!task) return;
+
+      const newDate = this.value; // Format: YYYY-MM-DD
+      task.date = newDate;
+      task.status = 'postponed';
+      task.alarmsShown = []; // Reset alarma za novi datum
+      
+      saveTasks();
+      document.getElementById('statusModal').classList.remove('open');
+      document.getElementById('postponeSection').style.display = 'none';
+      statusTaskId = null;
+      renderAll();
+    });
+
+    // ===== ALARM SISTEM =====
+    function checkAlarms() {
+      const now = new Date();
+      
+      tasks.forEach(task => {
+        // Provjeri da li je prošlo vrijeme i da li treba obilježiti kao missed
+        const [y, m, d] = task.date.split('-');
+        if (task.time && !task.status) {
+          if (isPast(parseInt(y), parseInt(m) - 1, parseInt(d), task.time)) {
+            task.status = 'missed';
+            saveTasks();
+          }
+        }
+
+        if (!task.alarmsShown) task.alarmsShown = [];
+        if (task.status === 'completed') return; // Ne alarmirati završene zadatke
+        
+        const taskDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+        
+        if (task.time) {
+          const [hours, minutes] = task.time.split(':');
+          taskDate.setHours(parseInt(hours), parseInt(minutes), 0);
+        } else {
+          taskDate.setHours(12, 0, 0);
+        }
+
+        const oneDayBefore = new Date(taskDate);
+        oneDayBefore.setDate(oneDayBefore.getDate() - 1);
+        oneDayBefore.setHours(18, 0, 0);
+
+        const twoHoursBefore = new Date(taskDate);
+        twoHoursBefore.setHours(twoHoursBefore.getHours() - 2);
+
+        const alarms = [
+          { type: 'day', time: oneDayBefore, label: '1 dan prije' },
+          { type: '2h', time: twoHoursBefore, label: '2 sata prije' },
+          { type: 'now', time: taskDate, label: 'Sada!' }
+        ];
+
+        alarms.forEach(alarm => {
+          const alarmKey = `${task.id}-${alarm.type}`;
+          
+          if (task.alarmsShown.includes(alarm.type)) return;
+          if (alarmShown.has(alarmKey)) return;
+
+          const diff = alarm.time - now;
+          
+          if (diff > -30000 && diff < 30000) {
+            showAlarm(task, alarm.label);
+            task.alarmsShown.push(alarm.type);
+            alarmShown.add(alarmKey);
+            saveTasks();
+          }
+        });
+      });
+    }
+
+    function showAlarm(task, timeLabel) {
+      const popup = document.getElementById('alarmPopup');
+      document.getElementById('alarmTime').textContent = timeLabel;
+      document.getElementById('alarmText').textContent = `${task.title}\n${task.description || ''}`;
+      
+      popup.classList.add('show');
+
+      if (document.getElementById('soundOn').checked) {
+        playBeep();
+      }
+
+      if (notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('🔔 Podsjetnik!', {
+          body: `${timeLabel}: ${task.title}`,
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🔔</text></svg>'
+        });
+      }
+    }
+
+    function playBeep() {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+      
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.5);
+    }
+
+    // ===== IMPORT/EXPORT =====
+    function exportData() {
+      const data = JSON.stringify(tasks, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `podsjetnik-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = event => {
+          try {
+            const imported = JSON.parse(event.target.result);
+            if (!Array.isArray(imported)) throw new Error('Nevažeći format');
+            
+            if (confirm(`Uvesti ${imported.length} obaveza? Postojeće će biti zamijenjene.`)) {
+              tasks = imported;
+              saveTasks();
+              renderAll();
+              alert('Uspješno uvezeno!');
+            }
+          } catch (err) {
+            alert('Greška pri uvozu: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    // ===== INICIJALIZACIJA =====
+    document.getElementById('btnNotify').onclick = async function() {
+      if (!('Notification' in window)) {
+        alert('Tvoj browser ne podržava notifikacije.');
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        notificationsEnabled = true;
+        this.textContent = '✓ Notifikacije uključene';
+        this.disabled = true;
+      }
+    };
+
+    document.getElementById('search').oninput = function() {
+      renderTaskList(this.value);
+    };
+
+    document.getElementById('btnExport').onclick = exportData;
+    document.getElementById('btnImport').onclick = importData;
+
+    document.getElementById('btnPrevYear').onclick = function() {
+      currentYear--;
+      renderAll();
+    };
+
+    document.getElementById('btnNextYear').onclick = function() {
+      currentYear++;
+      renderAll();
+    };
+
+    document.getElementById('btnToday').onclick = function() {
+      const now = new Date();
+      currentYear = now.getFullYear();
+      focusMonth = now.getMonth();
+      selectedDate = null;
+      renderAll();
+    };
+
+    document.getElementById('btnClear').onclick = function() {
+      if (!confirm('Obrisati SVE obaveze? Ova akcija se ne može poništiti!')) return;
+      tasks = [];
+      saveTasks();
+      alarmShown.clear();
+      renderAll();
+    };
+
+    document.getElementById('mClose').onclick = closeModal;
+    document.getElementById('btnCancel').onclick = closeModal;
+    document.getElementById('btnSave').onclick = saveTask;
+
+    document.getElementById('sClose').onclick = function() {
+      document.getElementById('statusModal').classList.remove('open');
+      statusTaskId = null;
+    };
+
+    document.getElementById('sCancelBtn').onclick = function() {
+      document.getElementById('statusModal').classList.remove('open');
+      statusTaskId = null;
+    };
+
+    document.getElementById('modal').onclick = function(e) {
+      if (e.target === this) closeModal();
+    };
+
+    document.getElementById('statusModal').onclick = function(e) {
+      if (e.target === this) {
+        this.classList.remove('open');
+        statusTaskId = null;
+      }
+    };
+
+    document.getElementById('alarmDismiss').onclick = function() {
+      document.getElementById('alarmPopup').classList.remove('show');
+    };
+
+    setInterval(checkAlarms, 20000);
+    checkAlarms();
+
+    renderAll();
+  </script>
+</body>
+</html>
